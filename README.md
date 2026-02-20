@@ -1,0 +1,2 @@
+# club_management_platform
+ Club Management Platform — A centralized internal web app designed to manage members, departments, tasks, and events within the club. It enables role‑based task assignment (to individuals, roles, or departments), event planning through reusable templates, full activity logging, and flexible task tracking to support real team workflows without strict enforcement. Built to improve collaboration, visibility, and operational efficiency for Admins, Core Team, and Members.
