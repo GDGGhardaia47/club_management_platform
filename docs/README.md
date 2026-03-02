@@ -1,26 +1,172 @@
-# Club Management Platform - Documentation
+# Club Management Platform — Documentation
+
+## Project Status
+
+**Current Target Version:** `v0.1 (MVP)`
+**Documentation Version:** `2.0 (Restructured for MVP)`
+**Strategy:** Incremental evolution from **0.1 → 1.0** through controlled minor releases.
+**Philosophy:** Build small. Validate fast. Expand gradually.
+
+---
+
+## Product Vision
+
+A centralized internal mobile application for managing:
+
+- Members
+- Departments & Sections
+- Events
+
+> ⚠️ Task Management, Advanced Analytics, Automation, and Advanced RBAC are **NOT part of v0.1** and are scheduled for future versions.
+
+---
 
 ## Overview
-This folder contains comprehensive documentation for the Club Management Platform project, designed to enable efficient development with minimal human intervention.
+This folder contains the documentation for the Club Management Platform project, scoped to v0.1 MVP. All advanced features are clearly separated into future roadmap sections.
 
 ---
 
 ## Documentation Files
 
 ### 📋 [01_functionalities.md](01_functionalities.md)
-**Purpose**: Complete specification of all features and functionalities
+**Purpose**: Feature specifications divided by release scope
+
+**Contents**:
+- v0.1 Core Features (MVP)
+- Future Features (Post 0.5)
+- v1.0 Target Features
+
+**When to use**:
+- Understanding what to implement in the current version
+- Checking whether a feature is in-scope for v0.1
+- Separating MVP work from roadmap work
+
+---
+
+### 🗓️ [02_sprint_planning.md](02_sprint_planning.md)
+**Purpose**: Sprint breakdowns for v0.1 MVP + iterative growth plan
+
+**Contents**:
+- Phase 1: 4 MVP Sprints (v0.1)
+- Phase 2: Minor release cycles (0.1.x roadmap)
+
+**When to use**:
+- Planning the current sprint
+- Tracking progress toward v0.1
+- Understanding the minor release sequence
+
+---
+
+### 🏗️ [03_architecture.md](03_architecture.md)
+**Purpose**: Simplified technical architecture for v0.1
+
+**Contents**:
+- Technology stack (Flutter + Firebase basics)
+- Lean project folder structure
+- Layered architecture (no premature optimization)
+- State management (Provider)
+- Notes on what evolves in later versions
+
+**When to use**:
+- Organizing code
+- Making simple architectural decisions
+- Understanding the current app structure
+
+---
+
+### 📊 [04_data_models.md](04_data_models.md)
+**Purpose**: Data model schemas scoped to v0.1 only
+
+**Contents**:
+- User model
+- Department model
+- Section model
+- Event model
+- Future models (clearly separated, not implemented)
+
+**When to use**:
+- Creating or referencing Firestore schemas
+- Writing Dart model classes
+- Understanding the database structure for v0.1
+
+---
+
+### 🔒 [05_security_rules.md](05_security_rules.md)
+**Purpose**: Simplified permission model for v0.1
+
+**Contents**:
+- Two roles: Member, Core Team
+- Three permission flags: `canManageMembers`, `canManageEvents`, `canArchive`
+- Basic Firestore security rules
+- No complex RBAC until future versions
+
+**When to use**:
+- Implementing permission checks
+- Writing Firestore security rules
+- Understanding who can do what in v0.1
+
+---
+
+### 🤖 [06_ai_agent_guide.md](06_ai_agent_guide.md)
+**Purpose**: Rules and conventions for AI agents working on this project
+
+**Contents**:
+- Current version context (always v0.1 unless told otherwise)
+- Rule: Never implement future features early
+- Incremental expansion strategy
+- Code conventions
+- Decision-making framework
+
+**When to use**:
+- Starting any implementation task
+- Making decisions under ambiguity
+- Following project conventions
+
+---
+
+## Versioning Strategy
+
+| Version | Focus |
+|---------|-------|
+| **0.1** | Ultra Lean MVP — Auth, Members, Departments, Events |
+| 0.1.1 | Member filtering + UI polish |
+| 0.1.2 | Section-level permission refinement |
+| 0.1.3 | Event participation logic |
+| 0.1.4 | Manual attendance tracking |
+| 0.1.5 | Archive improvements |
+| 0.1.6 | Basic activity feed |
+| 0.1.7 | Role titles enhancement |
+| 0.1.8 | Search & filtering |
+| 0.1.9 | Simple dashboard overview |
+| 0.1.10+ | Refactoring & performance tuning |
+| **1.0** | Full production-ready system |
+
+---
+
+## Quick Reference
+
+**For the current sprint** → `02_sprint_planning.md`
+**Is this feature in-scope?** → `01_functionalities.md`
+**Where does this code go?** → `03_architecture.md`
+**What does this model look like?** → `04_data_models.md`
+**Who can do this action?** → `05_security_rules.md`
+**AI agent starting point** → `06_ai_agent_guide.md`
+
+---
+
+> Build small. Ship fast. Improve continuously.
 
 **Contents**:
 - Authentication system
 - Role-based access control (RBAC)
 - Membership lifecycle tracking
-- Department system
+- Departments system
 - Task assignment engine
 - Event management
-- Event templates
+- Event templates (future feature)
 - Activity logging
 - Soft delete & archive system
-- Analytics dashboard
+- Analytics dashboard (future feature)
 - Detailed feature requirements
 - Validation rules
 - UI/UX requirements

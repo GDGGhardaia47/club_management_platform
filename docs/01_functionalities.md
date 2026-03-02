@@ -46,11 +46,11 @@ Role-Based Club Management Web Application for ~100 users, built with Flutter an
    - Create/edit/archive events for their department
    - View department member profiles
    - Assign tasks to department members
-   - View department analytics
+   - View department analytics (future feature)
 
 3. **Core Team**
    - All Department Manager permissions (across all departments)
-   - View global analytics dashboard
+   - View global analytics dashboard (future feature)
    - Create events from templates
    - Manage multi-department events
    - Access activity logs
@@ -62,7 +62,7 @@ Role-Based Club Management Web Application for ~100 users, built with Flutter an
    - Assign/modify roles
    - Create/edit/delete event templates
    - Manage departments
-   - Access admin analytics dashboard
+   - Access admin analytics dashboard (future feature)
    - Permanent delete archived items
    - View/manage activity logs
 
