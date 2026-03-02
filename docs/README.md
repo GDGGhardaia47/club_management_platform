@@ -22,6 +22,7 @@ A centralized internal mobile application for managing:
 ---
 
 ## Overview
+
 This folder contains the documentation for the Club Management Platform project, scoped to v0.1 MVP. All advanced features are clearly separated into future roadmap sections.
 
 ---
@@ -29,14 +30,17 @@ This folder contains the documentation for the Club Management Platform project,
 ## Documentation Files
 
 ### 📋 [01_functionalities.md](01_functionalities.md)
+
 **Purpose**: Feature specifications divided by release scope
 
 **Contents**:
+
 - v0.1 Core Features (MVP)
 - Future Features (Post 0.5)
 - v1.0 Target Features
 
 **When to use**:
+
 - Understanding what to implement in the current version
 - Checking whether a feature is in-scope for v0.1
 - Separating MVP work from roadmap work
@@ -44,13 +48,16 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🗓️ [02_sprint_planning.md](02_sprint_planning.md)
+
 **Purpose**: Sprint breakdowns for v0.1 MVP + iterative growth plan
 
 **Contents**:
+
 - Phase 1: 4 MVP Sprints (v0.1)
 - Phase 2: Minor release cycles (0.1.x roadmap)
 
 **When to use**:
+
 - Planning the current sprint
 - Tracking progress toward v0.1
 - Understanding the minor release sequence
@@ -58,9 +65,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🏗️ [03_architecture.md](03_architecture.md)
+
 **Purpose**: Simplified technical architecture for v0.1
 
 **Contents**:
+
 - Technology stack (Flutter + Firebase basics)
 - Lean project folder structure
 - Layered architecture (no premature optimization)
@@ -68,6 +77,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Notes on what evolves in later versions
 
 **When to use**:
+
 - Organizing code
 - Making simple architectural decisions
 - Understanding the current app structure
@@ -75,9 +85,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 📊 [04_data_models.md](04_data_models.md)
+
 **Purpose**: Data model schemas scoped to v0.1 only
 
 **Contents**:
+
 - User model
 - Department model
 - Section model
@@ -85,6 +97,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Future models (clearly separated, not implemented)
 
 **When to use**:
+
 - Creating or referencing Firestore schemas
 - Writing Dart model classes
 - Understanding the database structure for v0.1
@@ -92,15 +105,18 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🔒 [05_security_rules.md](05_security_rules.md)
+
 **Purpose**: Simplified permission model for v0.1
 
 **Contents**:
+
 - Two roles: Member, Core Team
 - Three permission flags: `canManageMembers`, `canManageEvents`, `canArchive`
 - Basic Firestore security rules
 - No complex RBAC until future versions
 
 **When to use**:
+
 - Implementing permission checks
 - Writing Firestore security rules
 - Understanding who can do what in v0.1
@@ -108,9 +124,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🤖 [06_ai_agent_guide.md](06_ai_agent_guide.md)
+
 **Purpose**: Rules and conventions for AI agents working on this project
 
 **Contents**:
+
 - Current version context (always v0.1 unless told otherwise)
 - Rule: Never implement future features early
 - Incremental expansion strategy
@@ -118,6 +136,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Decision-making framework
 
 **When to use**:
+
 - Starting any implementation task
 - Making decisions under ambiguity
 - Following project conventions
@@ -126,20 +145,20 @@ This folder contains the documentation for the Club Management Platform project,
 
 ## Versioning Strategy
 
-| Version | Focus |
-|---------|-------|
-| **0.1** | Ultra Lean MVP — Auth, Members, Departments, Events |
-| 0.1.1 | Member filtering + UI polish |
-| 0.1.2 | Section-level permission refinement |
-| 0.1.3 | Event participation logic |
-| 0.1.4 | Manual attendance tracking |
-| 0.1.5 | Archive improvements |
-| 0.1.6 | Basic activity feed |
-| 0.1.7 | Role titles enhancement |
-| 0.1.8 | Search & filtering |
-| 0.1.9 | Simple dashboard overview |
-| 0.1.10+ | Refactoring & performance tuning |
-| **1.0** | Full production-ready system |
+
+| Version    | Focus                                                |
+| ---------- | ---------------------------------------------------- |
+| **0.1**    | Ultra Lean MVP — Auth, Members, Departments, Events  |
+| 0.1.1      | Member filtering polish (minor patch)                |
+| 0.1.2      | UI consistency fixes (minor patch)                   |
+| **0.2**    | Section-level permissions + event participation      |
+| 0.2.1      | Attendance tracking (minor patch)                    |
+| **0.3**    | Archive improvements + activity feed                 |
+| 0.3.1      | Role titles enhancement (minor patch)                |
+| **0.4**    | Search & filtering                                   |
+| **0.5**    | Dashboard overview + analytics basics                |
+| 0.5.x      | Refactoring & performance tuning (minor patches)     |
+| **1.0**    | Full production-ready system                         |
 
 ---
 
@@ -157,6 +176,7 @@ This folder contains the documentation for the Club Management Platform project,
 > Build small. Ship fast. Improve continuously.
 
 **Contents**:
+
 - Authentication system
 - Role-based access control (RBAC)
 - Membership lifecycle tracking
@@ -171,7 +191,8 @@ This folder contains the documentation for the Club Management Platform project,
 - Validation rules
 - UI/UX requirements
 
-**When to use**: 
+**When to use**:
+
 - Understanding what features to implement
 - Checking feature requirements and constraints
 - Clarifying business rules
@@ -180,9 +201,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🗓️ [02_sprint_planning.md](02_sprint_planning.md)
+
 **Purpose**: Detailed sprint breakdowns for systematic development
 
 **Contents**:
+
 - 14 sprints total (7 backend + 7 frontend)
 - Backend sprints (Firebase, Cloud Functions, Security Rules)
 - Frontend sprints (Flutter UI, State Management, Integration)
@@ -192,6 +215,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Success metrics
 
 **When to use**:
+
 - Planning work for the week
 - Understanding development sequence
 - Tracking progress
@@ -201,9 +225,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🏗️ [03_architecture.md](03_architecture.md)
+
 **Purpose**: Technical architecture and design patterns
 
 **Contents**:
+
 - Technology stack details
 - Project folder structure
 - Clean architecture layers
@@ -218,6 +244,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Deployment strategy
 
 **When to use**:
+
 - Understanding code organization
 - Making architectural decisions
 - Adding new features
@@ -228,9 +255,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 📊 [04_data_models.md](04_data_models.md)
+
 **Purpose**: Complete data model schemas and implementations
 
 **Contents**:
+
 - Firestore collection schemas (JSON)
 - Dart model implementations
 - All enums (UserRole, TaskStatus, EventStatus, etc.)
@@ -240,6 +269,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Helper methods
 
 **When to use**:
+
 - Creating or modifying data models
 - Understanding database structure
 - Writing Firestore queries
@@ -250,9 +280,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🔒 [05_security_rules.md](05_security_rules.md)
+
 **Purpose**: Firebase Firestore security rules implementation
 
 **Contents**:
+
 - Complete security rules file
 - Helper functions for permissions
 - Role-based access rules for each collection
@@ -263,6 +295,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Deployment instructions
 
 **When to use**:
+
 - Implementing permission checks
 - Debugging permission errors
 - Adding new collections
@@ -273,9 +306,11 @@ This folder contains the documentation for the Club Management Platform project,
 ---
 
 ### 🤖 [06_ai_agent_guide.md](06_ai_agent_guide.md)
+
 **Purpose**: Guide for AI agents to work autonomously
 
 **Contents**:
+
 - Project context and current state
 - Development workflow
 - Code conventions (Dart, Flutter, Firebase)
@@ -287,6 +322,7 @@ This folder contains the documentation for the Club Management Platform project,
 - Quick reference
 
 **When to use**:
+
 - Starting work on the project
 - Understanding conventions
 - Making implementation decisions
@@ -301,6 +337,7 @@ This folder contains the documentation for the Club Management Platform project,
 ### For Human Developers
 
 #### Getting Started
+
 1. Read this README first
 2. Read `01_functionalities.md` to understand the project
 3. Read `03_architecture.md` to understand the structure
@@ -308,6 +345,7 @@ This folder contains the documentation for the Club Management Platform project,
 5. Reference other docs as needed during development
 
 #### During Development
+
 - **Implementing a feature** → Check `01_functionalities.md` for requirements
 - **Creating a model** → Use `04_data_models.md` as template
 - **Writing security rules** → Follow `05_security_rules.md` patterns
@@ -319,12 +357,14 @@ This folder contains the documentation for the Club Management Platform project,
 ### For AI Agents
 
 #### Initial Setup
+
 1. Read `06_ai_agent_guide.md` completely first
 2. Read `01_functionalities.md` to understand requirements
 3. Read `03_architecture.md` to understand structure
 4. Bookmark all docs for quick reference
 
 #### Working Pattern
+
 ```
 For each task:
 1. Consult 06_ai_agent_guide.md for conventions
@@ -335,6 +375,7 @@ For each task:
 ```
 
 #### Document Priority
+
 1. **06_ai_agent_guide.md** - Always start here
 2. **02_sprint_planning.md** - For current sprint tasks
 3. **01_functionalities.md** - For feature requirements
@@ -347,6 +388,7 @@ For each task:
 ## Documentation Maintenance
 
 ### Keeping Documentation Updated
+
 - Update docs when adding new features
 - Document any deviations from original plan
 - Keep sprint progress updated
@@ -355,6 +397,7 @@ For each task:
 - Update security rules when permissions change
 
 ### Documentation Versioning
+
 - Current version: **1.0 (Initial)**
 - All docs are living documents
 - Major changes should be noted in commit messages
@@ -367,30 +410,37 @@ For each task:
 ### By Role
 
 **Backend Developer:**
+
 - Start: `02_sprint_planning.md` (Backend sprints)
 - Reference: `04_data_models.md`, `05_security_rules.md`, `03_architecture.md`
 
 **Frontend Developer:**
+
 - Start: `02_sprint_planning.md` (Frontend sprints)
 - Reference: `01_functionalities.md`, `03_architecture.md`, `04_data_models.md`
 
 **Full-Stack Developer:**
+
 - Start: `02_sprint_planning.md`
 - Reference: All docs
 
 **AI Agent:**
+
 - Start: `06_ai_agent_guide.md`
 - Reference: All docs
 
 **Project Manager:**
+
 - Start: `01_functionalities.md`, `02_sprint_planning.md`
 
 **QA/Tester:**
+
 - Start: `01_functionalities.md`, `05_security_rules.md`
 
 ### By Task Type
 
 **Adding a Feature:**
+
 1. `01_functionalities.md` - Check requirements
 2. `04_data_models.md` - Update models if needed
 3. `03_architecture.md` - Follow patterns
@@ -398,15 +448,18 @@ For each task:
 5. `02_sprint_planning.md` - Update if needed
 
 **Fixing a Bug:**
+
 1. `06_ai_agent_guide.md` - Troubleshooting section
 2. Relevant feature doc
 3. `05_security_rules.md` - If permission-related
 
 **Refactoring:**
+
 1. `03_architecture.md` - Follow structure
 2. `06_ai_agent_guide.md` - Follow conventions
 
 **Writing Tests:**
+
 1. `06_ai_agent_guide.md` - Testing guidelines
 2. `03_architecture.md` - Testing strategy
 
@@ -426,18 +479,21 @@ For each task:
 ## Support and Feedback
 
 ### For Questions
+
 1. Check this README first
 2. Search relevant documentation file
 3. Check `06_ai_agent_guide.md` troubleshooting
 4. If still unclear, ask specific questions
 
 ### For Issues
+
 - Document unclear specifications
 - Missing implementation details
 - Conflicting information
 - Outdated information
 
 ### For Improvements
+
 - Suggestions for better organization
 - Additional examples needed
 - More diagrams/visuals needed
@@ -448,6 +504,7 @@ For each task:
 ## Summary
 
 This documentation set provides:
+
 - ✅ **Complete feature specifications** (100+ features)
 - ✅ **Detailed sprint planning** (14 sprints)
 - ✅ **Technical architecture** (patterns and structure)

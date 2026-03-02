@@ -1,92 +1,117 @@
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart';
-import 'viewmodels/app_viewmodel.dart';
-import 'views/login_view.dart';
-import 'views/main_shell.dart';
+import 'package:provider/provider.dart';
+
+// ── Core ──
+import 'core/theme/app_theme.dart';
+
+// ── Data layer ──
+import 'data/datasources/auth_remote_datasource.dart';
+import 'data/datasources/member_remote_datasource.dart';
+import 'data/datasources/department_remote_datasource.dart';
+import 'data/datasources/section_remote_datasource.dart';
+import 'data/datasources/event_remote_datasource.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/member_repository_impl.dart';
+import 'data/repositories/department_repository_impl.dart';
+import 'data/repositories/section_repository_impl.dart';
+import 'data/repositories/event_repository_impl.dart';
+
+// ── Presentation layer ──
+import 'presentation/viewmodels/app_viewmodel.dart';
+import 'presentation/viewmodels/members_viewmodel.dart';
+import 'presentation/viewmodels/departments_viewmodel.dart';
+import 'presentation/viewmodels/events_viewmodel.dart';
+import 'presentation/viewmodels/archive_viewmodel.dart';
+import 'presentation/views/login_view.dart';
+import 'presentation/views/main_shell.dart';
 
 /// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/// GDG Ghardaïa – Club Management Platform (MVP v0.1)
-/// Architecture: MVVM (Model-View-ViewModel)
+/// GDG Ghardaïa – Club Management Platform (v0.1)
+/// Architecture: Clean Architecture
 /// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ///
-/// MVVM Layer Responsibilities:
-///   MODEL      → Data classes (Member, Event)
-///   VIEWMODEL  → Business logic & state (ChangeNotifier)
-///   VIEW       → Pure UI (widgets that consume ViewModels)
-///   SERVICE    → Data fetching (GDG API, dummy data)
+/// Layer Responsibilities:
+///   PRESENTATION  → Views + ViewModels (Flutter/Provider)
+///   DOMAIN        → Models + Repository interfaces (pure Dart)
+///   DATA          → Datasources + Repository implementations
+///   EXTERNAL      → Firebase / HTTP (stub stubs in v0.1)
 ///
 /// Folder Structure:
 ///   lib/
-///   ├── main.dart              ← App entry point (this file)
-///   ├── theme/app_theme.dart   ← Material 3 theme config
-///   ├── models/                ← Data models (Member, Event)
-///   ├── viewmodels/            ← State & logic (ChangeNotifier)
-///   ├── views/                 ← UI screens (consume ViewModels)
-///   └── services/              ← Data services (GDG, dummy data)
+///   ├── main.dart                     ← DI wiring + app entry point
+///   ├── core/theme/                   ← Material 3 theme config
+///   ├── core/constants/               ← Route paths, collection names
+///   ├── core/errors/                  ← Typed exceptions
+///   ├── domain/models/                ← Entity classes (pure Dart)
+///   ├── domain/repositories/          ← Abstract repository interfaces
+///   ├── data/datasources/             ← Remote data access (stub/Firebase)
+///   ├── data/repositories/            ← Repository implementations
+///   └── presentation/viewmodels/      ← ChangeNotifier ViewModels
+///       presentation/views/           ← Stateless/Stateful widgets
 ///
-/// Navigation Flow:
-///   1. App starts → LoginView (mock Google Sign-In)
-///   2. After login → MainShell (NavigationBar with 4 tabs)
-///     ├── HomeView     – Welcome, upcoming events, quick actions
-///     ├── MembersView  – Department → Section → Members hierarchy
-///     ├── EventsView   – Event list with status chips
-///     └── SettingsView – Theme toggle, core team simulation
-///   3. Members → tap → MemberDetailView
-///   4. Events → tap → EventDetailView
-///   5. AppBar menu → ArchiveView (static lists)
+/// Dependency Injection:
+///   All repos are wired here via MultiProvider.
+///   ViewModels receive their repos via constructor (no service locator).
+///   Only datasources may import firebase_* packages.
 ///
 void main() {
-  runApp(const GDGApp());
+  // ── Datasources ──
+  final authDs    = AuthRemoteDatasource();
+  final memberDs  = MemberRemoteDatasource();
+  final deptDs    = DepartmentRemoteDatasource();
+  final sectionDs = SectionRemoteDatasource();
+  final eventDs   = EventRemoteDatasource();
+
+  // ── Repository implementations ──
+  final authRepo    = AuthRepositoryImpl(authDs);
+  final memberRepo  = MemberRepositoryImpl(memberDs);
+  final deptRepo    = DepartmentRepositoryImpl(deptDs);
+  final sectionRepo = SectionRepositoryImpl(sectionDs);
+  final eventRepo   = EventRepositoryImpl(eventDs);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        // Global state — auth, theme, role simulation
+        ChangeNotifierProvider(create: (_) => AppViewModel(authRepo)),
+
+        // Feature ViewModels — each owns one or more repos
+        ChangeNotifierProvider(create: (_) => MembersViewModel(memberRepo)),
+        ChangeNotifierProvider(
+          create: (_) => DepartmentsViewModel(deptRepo, sectionRepo),
+        ),
+        ChangeNotifierProvider(create: (_) => EventsViewModel(eventRepo)),
+        ChangeNotifierProvider(
+          create: (_) => ArchiveViewModel(memberRepo, eventRepo),
+        ),
+      ],
+      child: const GDGApp(),
+    ),
+  );
 }
 
-/// Root widget — creates the AppViewModel and passes it down.
-/// Uses ListenableBuilder to react to ViewModel changes.
-class GDGApp extends StatefulWidget {
+/// Root widget — watches [AppViewModel] for theme and auth state.
+class GDGApp extends StatelessWidget {
   const GDGApp({super.key});
 
   @override
-  State<GDGApp> createState() => _GDGAppState();
-}
-
-class _GDGAppState extends State<GDGApp> {
-  // Top-level ViewModel — manages auth, theme, core team state
-  late final AppViewModel _appViewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _appViewModel = AppViewModel();
-  }
-
-  @override
-  void dispose() {
-    _appViewModel.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // ListenableBuilder rebuilds when AppViewModel notifies (login, theme change)
-    return ListenableBuilder(
-      listenable: _appViewModel,
-      builder: (context, _) {
-        return MaterialApp(
-          title: 'GDG Ghardaïa',
-          debugShowCheckedModeBanner: false,
+    final appVm = context.watch<AppViewModel>();
 
-          // ── Theme from ViewModel ──
-          theme: AppTheme.lightTheme(),
-          darkTheme: AppTheme.darkTheme(),
-          themeMode: _appViewModel.isDarkMode
-              ? ThemeMode.dark
-              : ThemeMode.light,
+    return MaterialApp(
+      title: 'GDG Ghardaïa',
+      debugShowCheckedModeBanner: false,
 
-          // ── Navigation: Login → Main Shell ──
-          home: _appViewModel.isLoggedIn
-              ? MainShell(appViewModel: _appViewModel)
-              : LoginView(appViewModel: _appViewModel),
-        );
-      },
+      // ── Theme ──
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      themeMode: appVm.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
+      // ── Navigation: Login → Main Shell ──
+      home: appVm.isLoggedIn
+          ? const MainShell()
+          : LoginView(appViewModel: appVm),
     );
   }
 }
+

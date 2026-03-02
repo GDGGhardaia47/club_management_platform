@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models/member.dart';
+import '../../core/theme/app_theme.dart';
+import '../../domain/models/member.dart';
 
 /// MemberDetailView – Shows full details for a single member.
 ///
-/// MVVM Role: VIEW
-/// - Receives a [Member] model and core team flag
-/// - Pure UI — no ViewModel needed (read-only data)
+/// Clean Architecture: VIEW — pure read-only display, no ViewModel needed.
 class MemberDetailView extends StatelessWidget {
   final Member member;
   final bool isCoreTeam;
@@ -20,6 +18,7 @@ class MemberDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isMemberCoreTeam = member.role == MemberRole.coreTeam;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Member Details')),
@@ -27,23 +26,30 @@ class MemberDetailView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildProfileHeader(theme),
+            _buildProfileHeader(theme, isMemberCoreTeam),
             const SizedBox(height: 24),
             _buildInfoCard(
               theme,
               Icons.business,
               'Department',
-              member.department,
+              member.departmentId,
             ),
             const SizedBox(height: 8),
+            if (member.sectionId != null) ...[
+              _buildInfoCard(
+                theme,
+                Icons.folder_outlined,
+                'Section',
+                member.sectionId!,
+              ),
+              const SizedBox(height: 8),
+            ],
             _buildInfoCard(
               theme,
-              Icons.folder_outlined,
-              'Section',
-              member.section,
+              Icons.badge,
+              'Role',
+              isMemberCoreTeam ? 'Core Team' : 'Member',
             ),
-            const SizedBox(height: 8),
-            _buildInfoCard(theme, Icons.badge, 'Role', member.roleTitle),
             const SizedBox(height: 8),
             _buildInfoCard(
               theme,
@@ -56,7 +62,6 @@ class MemberDetailView extends StatelessWidget {
           ],
         ),
       ),
-      // FAB for core team
       floatingActionButton: isCoreTeam
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -74,17 +79,14 @@ class MemberDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(ThemeData theme) {
+  Widget _buildProfileHeader(ThemeData theme, bool isMemberCoreTeam) {
     Color avatarColor;
-    switch (member.department) {
-      case 'Development Department':
-        avatarColor = GDGColors.blue;
-        break;
-      case 'Design Department':
-        avatarColor = GDGColors.red;
-        break;
-      default:
-        avatarColor = GDGColors.yellow;
+    if (member.departmentId.toLowerCase().contains('dev')) {
+      avatarColor = GDGColors.blue;
+    } else if (member.departmentId.toLowerCase().contains('design')) {
+      avatarColor = GDGColors.red;
+    } else {
+      avatarColor = GDGColors.yellow;
     }
 
     return Card(
@@ -113,13 +115,9 @@ class MemberDetailView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
-            if (member.isCoreTeam)
+            if (isMemberCoreTeam)
               Chip(
-                avatar: const Icon(
-                  Icons.star,
-                  size: 16,
-                  color: GDGColors.green,
-                ),
+                avatar: const Icon(Icons.star, size: 16, color: GDGColors.green),
                 label: const Text('Core Team'),
                 backgroundColor: GDGColors.green.withValues(alpha: 0.1),
                 side: BorderSide.none,
@@ -180,7 +178,9 @@ class MemberDetailView extends StatelessWidget {
               'Joined the club',
               _formatDate(member.joinDate),
             ),
-            _activityItem(theme, 'Assigned to ${member.section}', 'Ongoing'),
+            if (member.sectionId != null)
+              _activityItem(
+                  theme, 'Assigned to ${member.sectionId}', 'Ongoing'),
             _activityItem(theme, 'Activity data coming soon...', 'Placeholder'),
           ],
         ),
@@ -223,18 +223,8 @@ class MemberDetailView extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

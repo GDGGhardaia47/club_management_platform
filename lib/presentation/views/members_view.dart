@@ -1,40 +1,59 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models/member.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../domain/models/member.dart';
+import '../viewmodels/app_viewmodel.dart';
+import '../viewmodels/members_viewmodel.dart';
 import 'member_detail_view.dart';
 
-/// MembersView – Displays members grouped by Department → Section.
+/// MembersView – Displays active members grouped by department.
 ///
-/// MVVM Role: VIEW
-/// - Receives members list and isCoreTeam flag from parent
-/// - Delegates navigation to MemberDetailView on tap
-/// - Shows FAB for core team members (mock add action)
-class MembersView extends StatelessWidget {
-  final List<Member> members;
-  final bool isCoreTeam;
+/// Clean Architecture: VIEW — reads from [MembersViewModel] and [AppViewModel]
+/// via Provider; no direct repo/service access.
+class MembersView extends StatefulWidget {
+  const MembersView({super.key});
 
-  const MembersView({
-    super.key,
-    required this.members,
-    required this.isCoreTeam,
-  });
+  @override
+  State<MembersView> createState() => _MembersViewState();
+}
+
+class _MembersViewState extends State<MembersView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MembersViewModel>().loadMembers();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Group members by department (excluding archived)
+    final vm = context.watch<MembersViewModel>();
+    final isCoreTeam = context.watch<AppViewModel>().isCoreTeam;
+
+    if (vm.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (vm.error != null) {
+      return Center(child: Text('Error: ${vm.error}'));
+    }
+
+    // Group active members by departmentId.
     final Map<String, List<Member>> grouped = {};
-    for (final member in members.where((m) => !m.isArchived)) {
-      grouped.putIfAbsent(member.department, () => []).add(member);
+    for (final member in vm.members.where((m) => !m.archived)) {
+      grouped.putIfAbsent(member.departmentId, () => []).add(member);
     }
 
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: grouped.entries.map((entry) {
-          return _buildDepartmentSection(context, entry.key, entry.value);
-        }).toList(),
-      ),
-      // FAB visible only for core team members
+      body: grouped.isEmpty
+          ? const Center(child: Text('No members found.'))
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: grouped.entries.map((entry) {
+                return _buildDepartmentSection(
+                    context, entry.key, entry.value, isCoreTeam);
+              }).toList(),
+            ),
       floatingActionButton: isCoreTeam
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -52,24 +71,24 @@ class MembersView extends StatelessWidget {
     );
   }
 
-  /// Builds a department section with its sections and members.
   Widget _buildDepartmentSection(
     BuildContext context,
-    String department,
+    String departmentId,
     List<Member> deptMembers,
+    bool isCoreTeam,
   ) {
     final theme = Theme.of(context);
 
-    // Sub-group by section within department
+    // Sub-group by sectionId within department.
     final Map<String, List<Member>> sectionGroups = {};
     for (final m in deptMembers) {
-      sectionGroups.putIfAbsent(m.section, () => []).add(m);
+      final key = m.sectionId ?? 'No Section';
+      sectionGroups.putIfAbsent(key, () => []).add(m);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Department header
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
@@ -77,7 +96,7 @@ class MembersView extends StatelessWidget {
               const Icon(Icons.business, color: GDGColors.blue, size: 18),
               const SizedBox(width: 8),
               Text(
-                department,
+                departmentId,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: GDGColors.blue,
@@ -86,12 +105,10 @@ class MembersView extends StatelessWidget {
             ],
           ),
         ),
-        // Sections within department
         ...sectionGroups.entries.map((sectionEntry) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Section header
               Padding(
                 padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
                 child: Row(
@@ -112,10 +129,9 @@ class MembersView extends StatelessWidget {
                   ],
                 ),
               ),
-              // Member tiles
-              ...sectionEntry.value.map((member) {
-                return _MemberTile(member: member, isCoreTeam: isCoreTeam);
-              }),
+              ...sectionEntry.value.map(
+                (member) => _MemberTile(member: member, isCoreTeam: isCoreTeam),
+              ),
             ],
           );
         }),
@@ -137,17 +153,18 @@ class _MemberTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Avatar colour derived from departmentId (placeholder logic for v0.1).
     Color avatarColor;
-    switch (member.department) {
-      case 'Development Department':
-        avatarColor = GDGColors.blue;
-        break;
-      case 'Design Department':
-        avatarColor = GDGColors.red;
-        break;
-      default:
-        avatarColor = GDGColors.yellow;
+    if (member.departmentId.toLowerCase().contains('dev')) {
+      avatarColor = GDGColors.blue;
+    } else if (member.departmentId.toLowerCase().contains('design')) {
+      avatarColor = GDGColors.red;
+    } else {
+      avatarColor = GDGColors.yellow;
     }
+
+    final isMemberCoreTeam = member.role == MemberRole.coreTeam;
+    final roleLabel = isMemberCoreTeam ? 'Core Team' : 'Member';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -165,8 +182,8 @@ class _MemberTile extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        subtitle: Text(member.roleTitle, style: theme.textTheme.bodySmall),
-        trailing: member.isCoreTeam
+        subtitle: Text(roleLabel, style: theme.textTheme.bodySmall),
+        trailing: isMemberCoreTeam
             ? Chip(
                 label: const Text('Core', style: TextStyle(fontSize: 11)),
                 backgroundColor: GDGColors.green.withValues(alpha: 0.15),
@@ -175,13 +192,14 @@ class _MemberTile extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               )
             : null,
-        // Navigate to Member Detail View
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  MemberDetailView(member: member, isCoreTeam: isCoreTeam),
+              builder: (_) => MemberDetailView(
+                member: member,
+                isCoreTeam: isCoreTeam,
+              ),
             ),
           );
         },

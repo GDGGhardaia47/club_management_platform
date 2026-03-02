@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import '../viewmodels/app_viewmodel.dart';
 
 /// SettingsView – Theme toggle, core team simulation, about section.

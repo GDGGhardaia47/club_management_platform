@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import '../viewmodels/app_viewmodel.dart';
 
 /// LoginView – Mock authentication screen.
@@ -51,7 +51,7 @@ class _LoginViewState extends State<LoginView>
       if (mounted) {
         setState(() => _isLoading = false);
         // Delegate to ViewModel — it will notify listeners and app will rebuild
-        widget.appViewModel.login();
+        widget.appViewModel.signIn();
       }
     });
   }

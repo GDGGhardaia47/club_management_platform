@@ -1,44 +1,36 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models/event.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../domain/models/event.dart';
 import '../viewmodels/app_viewmodel.dart';
+import '../viewmodels/events_viewmodel.dart';
 
 /// HomeView – Dashboard showing welcome, upcoming events, section info, quick actions.
 ///
-/// MVVM Role: VIEW
-/// - Receives [AppViewModel] for user info and tab switching
-/// - Receives [events] list from parent (MainShell passes EventsViewModel data)
-/// - No state management — purely declarative UI
+/// Clean Architecture: VIEW — reads state from [AppViewModel] and [EventsViewModel]
+/// via Provider; no direct repo/service access.
 class HomeView extends StatelessWidget {
-  final AppViewModel appViewModel;
-  final List<Event> events;
-
   /// Callback to switch tabs in the parent MainShell.
   final ValueChanged<int> onSwitchTab;
 
-  const HomeView({
-    super.key,
-    required this.appViewModel,
-    required this.events,
-    required this.onSwitchTab,
-  });
+  const HomeView({super.key, required this.onSwitchTab});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appVm = context.watch<AppViewModel>();
+    final eventsVm = context.watch<EventsViewModel>();
 
-    // Get upcoming events (not Done), sorted by nearest date
-    final upcomingEvents = events.where((e) => e.status != 'Done').toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
+    final upcomingEvents = eventsVm.upcomingEvents.take(3).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildWelcomeCard(theme),
+          _buildWelcomeCard(theme, appVm.currentUserName),
           const SizedBox(height: 16),
-          _buildUpcomingEventsCard(theme, upcomingEvents),
+          _buildUpcomingEventsCard(theme, upcomingEvents, eventsVm.isLoading),
           const SizedBox(height: 16),
           _buildSectionCard(theme),
           const SizedBox(height: 16),
@@ -49,7 +41,7 @@ class HomeView extends StatelessWidget {
   }
 
   // ── Welcome Card with gradient ──
-  Widget _buildWelcomeCard(ThemeData theme) {
+  Widget _buildWelcomeCard(ThemeData theme, String userName) {
     return Card(
       child: Container(
         width: double.infinity,
@@ -93,7 +85,7 @@ class HomeView extends StatelessWidget {
               ),
             ),
             Text(
-              appViewModel.currentUserName,
+              userName,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -106,7 +98,11 @@ class HomeView extends StatelessWidget {
   }
 
   // ── Upcoming Events Card ──
-  Widget _buildUpcomingEventsCard(ThemeData theme, List<Event> upcoming) {
+  Widget _buildUpcomingEventsCard(
+    ThemeData theme,
+    List<Event> upcoming,
+    bool isLoading,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -126,41 +122,41 @@ class HomeView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (upcoming.isEmpty)
+            if (isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (upcoming.isEmpty)
               const Text('No upcoming events.')
             else
-              ...upcoming
-                  .take(3)
-                  .map(
-                    (event) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          _statusDot(event.status),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  event.title,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Text(
-                                  '${_formatDate(event.date)} · ${event.location}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+              ...upcoming.map(
+                (event) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      _statusDot(event.status),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              event.title,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              _formatDate(event.startDate),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
+                ),
+              ),
           ],
         ),
       ),
@@ -243,7 +239,7 @@ class HomeView extends StatelessWidget {
                 icon: Icons.people,
                 label: 'View Members',
                 color: GDGColors.blue,
-                onTap: () => onSwitchTab(1), // Switch to Members tab
+                onTap: () => onSwitchTab(1),
               ),
             ),
             const SizedBox(width: 12),
@@ -252,7 +248,7 @@ class HomeView extends StatelessWidget {
                 icon: Icons.event,
                 label: 'View Events',
                 color: GDGColors.red,
-                onTap: () => onSwitchTab(2), // Switch to Events tab
+                onTap: () => onSwitchTab(2),
               ),
             ),
           ],
@@ -261,13 +257,13 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _statusDot(String status) {
+  Widget _statusDot(EventStatus status) {
     Color color;
     switch (status) {
-      case 'Ongoing':
+      case EventStatus.ongoing:
         color = GDGColors.yellow;
         break;
-      case 'Done':
+      case EventStatus.completed:
         color = GDGColors.green;
         break;
       default:
@@ -282,18 +278,8 @@ class HomeView extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -327,9 +313,9 @@ class _QuickActionButton extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
