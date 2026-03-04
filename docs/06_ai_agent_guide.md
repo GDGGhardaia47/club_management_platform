@@ -28,8 +28,10 @@ Features listed under "Future Features" or "v1.0 Target Features" in `01_functio
 - Do not add a notification system
 - Do not add Cloud Functions
 - Do not implement a full RBAC system
-- Do not add a manager or admin role
+- Do not add a `section_member`, `department_manager`, or `admin` role — v0.1 uses only `member` and `core_team`
+- Do not implement the Discord-style role system (Admins creating/assigning roles) — this is v0.4+
 - Do not add event templates
+- **Do not implement any form of self-registration or auto-profile creation on first login — this is permanently forbidden in all versions**
 
 If you are unsure whether a feature is in-scope, check `01_functionalities.md` under the v0.1 section. If it is not listed there, do not implement it.
 

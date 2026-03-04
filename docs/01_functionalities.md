@@ -21,7 +21,9 @@
 
 #### Google Sign-In
 - Sign in with Google (can start as mock / hardcoded, replace with Firebase Auth later)
-- On first login, user profile is created automatically
+- Member profile must already exist in Firestore before login is permitted — Core Team creates the account first
+- On first login, the app looks up the member document by Firebase Auth UID and loads the existing profile
+- If no matching member document exists, the user is shown an "access denied" screen — no auto-registration
 - Logout clears session
 
 #### Session
@@ -29,9 +31,10 @@
 - Redirect unauthenticated users to login screen
 
 #### Notes for v0.1
+- **No self-registration of any kind — accounts are created exclusively by Admin (or Core Team with permissions in future versions). This is a permanent rule, not a v0.1-only restriction.**
 - No email/password registration
 - No email verification
-- No forgot password flow
+- Forgot password flow available
 - No multi-factor auth
 
 ---
@@ -39,9 +42,29 @@
 ### 2. Theme & Branding
 
 - Light and Dark theme (Material 3)
-- Google brand colors only: Blue `#4285F4`, Red `#DB4437`, Yellow `#F4B400`, Green `#0F9D58`
+- **Font**: Google Sans exclusively — no other typeface is permitted anywhere in the app
 - Theme toggle in settings
 - Consistent typography across all screens
+
+#### Color Palette — Google Brand Colors with Material 3 Tonal Variants
+
+Only Google brand colors and their tonal variants are used. No arbitrary colors.
+
+| Role | Light | Dark |
+|------|-------|------|
+| **Primary** (Blue) | `#1A73E8` | `#669DF6` |
+| Primary Container | `#D2E3FC` | `#0842A0` |
+| **Secondary** (Green) | `#1E8E3E` | `#6DD58C` |
+| Secondary Container | `#CEEAD6` | `#0A4020` |
+| **Tertiary** (Yellow) | `#B06000` | `#FDD663` |
+| Tertiary Container | `#FEF08A` | `#4A3500` |
+| **Error** (Red) | `#D93025` | `#E57368` |
+| Error Container | `#FAD2CF` | `#601410` |
+| Surface | `#FFFBFE` | `#1C1B1F` |
+| On Surface | `#1C1B1F` | `#E6E1E5` |
+
+**Base hex references:**
+- Blue: `#4285F4` — Red: `#DB4437` — Yellow: `#F4B400` — Green: `#0F9D58`
 
 ---
 
@@ -155,7 +178,8 @@ Three permission flags:
 | `canManageEvents` | Core Team |
 | `canArchive` | Core Team |
 
-No complex RBAC. No department manager role. No department-level permissions.
+No complex RBAC. No Section Member, Department Manager, or Admin role in v0.1.
+Full role hierarchy (`Member → Section Member → Department Manager → Core Team → Admin`) is introduced incrementally from v0.2 onward, using a Discord-style role permission system.
 
 ---
 
@@ -231,10 +255,17 @@ These features are **not in scope for v0.1**. Do not implement them prematurely.
 These represent the full vision of the platform. They will be reached incrementally through 0.1.x → 0.9.x minor releases.
 
 ### Full RBAC System
-- Role hierarchy: Member → Section Lead → Department Manager → Core Team → Admin
+- Role hierarchy: `Member → Section Member → Department Manager → Core Team → Admin`
 - Role-based UI rendering
 - Permission inheritance
 - Dynamic permission updates on role change
+
+### Discord-Style Role System (Admin)
+- Admins can create custom roles with named permission sets
+- Roles can be linked to events (e.g. event coordinator role) and tasks (e.g. task owner role)
+- Permissions are assigned per role, not hardcoded per user
+- Role assignment UI for managing member roles
+- Admin-only: role creation, editing, deletion
 
 ### Full Department Permissions
 - Department managers with scoped permissions
@@ -268,14 +299,15 @@ These represent the full vision of the platform. They will be reached incrementa
 
 ## Scope Summary
 
-| Category | v0.1 | Future |
-|----------|------|--------|
-| Auth | Google Sign-In (mock OK) | Email/password, MFA |
-| Roles | Member, Core Team | Full hierarchy |
-| Members | CRUD, Dept/Section hierarchy | History, analytics |
-| Events | CRUD, listing, archive | Templates, meetings |
-| Tasks | Not included | Full task engine |
-| Analytics | Not included | Full dashboard |
-| Logging | Not included | Full audit trail |
-| Notifications | Not included | Full system |
-| Cloud Functions | Not included | Full automation |
+| Category | v0.1 | v0.2–v0.3 | v0.4–v0.5 | v0.6–v0.8 | v1.0 |
+|----------|------|-----------|-----------|-----------|------|
+| Auth | Google Sign-In (Core Team pre-creates accounts) | — | — | Email/password login (existing accounts only) | MFA, full OAuth |
+| Roles | Member, Core Team | Section Member role | Department Manager role | Admin + Discord-style role creation | Custom roles linked to events & tasks |
+| Members | CRUD, Dept/Section hierarchy | Attendance, event participation | Promotion & dept history | Role-change history | Full audit trail + analytics |
+| Events | CRUD, listing, archive | Participation tracking | Meeting management | Event templates + coordinator roles | Full event engine |
+| Tasks | Not included | Not included | Basic task CRUD | Full task engine | Task-role-event linking |
+| Analytics | Not included | Basic stat cards | Per-section stats | Dept-level analytics | Full dashboard (PDF/CSV export) |
+| Logging | Not included | Activity feed (basic) | Full audit trail | Per-entity logs | Complete audit system |
+| Notifications | Not included | Not included | Deadline alerts | Assignment notifications | Full notification system |
+| Cloud Functions | Not included | Not included | Not included | Role automation | Full automation pipeline |
+| Search | Not included | Not included | Global search bar | Advanced filters + sorting | Full search system |

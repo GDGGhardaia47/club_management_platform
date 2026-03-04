@@ -27,7 +27,7 @@ Only models required for v0.1 are defined here. Future models are listed at the 
   "id": "string (Firebase Auth UID)",
   "name": "string",
   "email": "string",
-  "role": "string (enum: 'member' | 'core_team')",
+  "role": "string (enum v0.1: 'member' | 'core_team' — full hierarchy added incrementally from v0.2)",
   "departmentId": "string (reference to departments)",
   "sectionId": "string | null (reference to sections)",
   "joinDate": "timestamp",
@@ -42,7 +42,7 @@ Only models required for v0.1 are defined here. Future models are listed at the 
 
 ### Permission Flags (derived, not stored)
 
-Computed from role at runtime:
+Computed from role at runtime in v0.1. From v0.4 onward, permissions are driven by the Discord-style role system (assigned by Admin).
 
 | Flag | `member` | `core_team` |
 |------|----------|-------------|
@@ -50,9 +50,14 @@ Computed from role at runtime:
 | `canManageEvents` | false | true |
 | `canArchive` | false | true |
 
+> **Future (v0.4+):** Permission flags will be resolved from a `Role` document rather than hardcoded per role name. Admins will create roles and assign permission sets via the Discord-style role management UI.
+
 ### Dart Model
 
 ```dart
+// v0.1 roles only. Full hierarchy: member → sectionMember → departmentManager → coreTeam → admin
+// From v0.2 onward, new roles are introduced incrementally.
+// From v0.4, roles become dynamic (Discord-style) managed by Admin.
 enum MemberRole { member, coreTeam }
 enum MemberStatus { active, archived }
 
@@ -135,7 +140,7 @@ class Member {
 ### Validation Rules
 - `name`: required, 2–50 characters
 - `email`: required, valid email format
-- `role`: required, must be `'member'` or `'core_team'`
+- `role`: required, must be `'member'` or `'core_team'` in v0.1 — additional roles (`section_member`, `department_manager`, `admin`) added in v0.2–v0.4
 - `departmentId`: required
 - `joinDate`: auto-set on creation
 
@@ -404,9 +409,10 @@ The following models are **not implemented** in v0.1. They are listed here for a
 
 | Model | Planned Version | Description |
 |-------|----------------|-------------|
-| `Task` | 0.6+ | Task assignment engine |
+| `Task` | 0.5+ | Task assignment engine |
+| `Role` | 0.4+ | Discord-style role with named permission sets (Admin-managed) |
 | `ActivityLog` | 0.3+ | Audit trail for all actions |
-| `EventTemplate` | 0.8+ | Reusable event templates |
+| `EventTemplate` | 0.7+ | Reusable event templates |
 | `Notification` | 0.7+ | In-app notification records |
 | `Analytics` | 0.9+ | Aggregated metrics |
 

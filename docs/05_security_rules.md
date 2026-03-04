@@ -4,9 +4,14 @@
 
 Security rules are simplified for v0.1. Two roles, three permission flags. No complex RBAC until future versions.
 
+> **Planned role hierarchy:** `Member → Section Member → Department Manager → Core Team → Admin`
+> Roles are introduced incrementally (v0.2–v0.4). From v0.4, role permissions are managed via a Discord-style system where Admins create roles and assign permission sets.
+
 ---
 
 ## Permission Model
+
+> **Permanent rule (all versions):** There is no self-registration. Member accounts are created exclusively by Core Team (v0.1–v0.3) or by Admin / Core Team with the appropriate permission (v0.4+). A user who authenticates with Google but has no existing member document in Firestore is denied access. This is enforced at both the UI level and the Firestore rules level.
 
 ### Roles (v0.1)
 
@@ -23,7 +28,9 @@ Security rules are simplified for v0.1. Two roles, three permission flags. No co
 | `canManageEvents` | `core_team` | Create, edit, archive events |
 | `canArchive` | `core_team` | Archive and restore members/events |
 
-No department-level permissions. No manager role. No admin role. These come in future versions.
+No department-level permissions. No Section Member role. No Department Manager role. No Admin role. These come in future versions.
+
+> From v0.4 onward, Firestore rules will validate against a `roles` collection rather than a hardcoded role string.
 
 ---
 
@@ -83,7 +90,7 @@ service cloud.firestore {
       // Any authenticated active user can read member profiles
       allow read: if isActiveMember();
 
-      // Only Core Team can create members
+      // Only Core Team can create members — no self-registration, ever
       allow create: if isCoreTeam()
         && request.resource.data.keys().hasAll(['name', 'email', 'role', 'departmentId'])
         && request.resource.data.role in ['member', 'core_team'];
@@ -164,12 +171,14 @@ In addition to Firestore rules, the Flutter UI hides management actions from reg
 ### Future Security Additions
 
 | Feature | Version |
-|---------|---------|
-| Department-scoped writes | 0.2+ |
-| Manager role permissions | 0.3+ |
-| Admin role (hard deletes) | 1.0 |
+|---------|--------|
+| Section Member role + section-scoped reads | 0.2+ |
+| Department Manager role + dept-scoped writes | 0.3+ |
+| Admin role + Discord-style role management | 0.4+ |
+| Dynamic permission checks against `roles` collection | 0.4+ |
 | Self-profile edits | 0.4+ |
 | Read-scoped by department | 0.5+ |
+| Hard deletes (Admin only) | 1.0 |
 
 ---
 

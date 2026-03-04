@@ -61,6 +61,7 @@ After v0.1 ships, growth follows two levels:
 - [ ] Create `AuthViewModel` (or Provider) to expose auth state
 - [ ] Build `LoginView` with Google Sign-In button
 - [ ] Auto-redirect authenticated users to home, unauthenticated to login
+- [ ] On login, look up member document by Firebase Auth UID — if not found, show "Access Denied" screen (no auto-registration)
 - [ ] Persist session across restarts
 
 #### 1.4 Navigation Shell
@@ -220,13 +221,18 @@ Only begin after v0.1 is stable. Minor versions introduce new feature areas; pat
 |----------|-------|-------|-----------|
 | **0.1.1** | patch | Member filtering polish | Advanced filter panel, member status badges |
 | **0.1.2** | patch | UI consistency fixes | Card styles, empty states, loading skeletons |
-| **0.2**   | minor | Section permissions + event participation | Section leads, mark participants |
+| **0.2**   | minor | Section Member role + event participation | Introduce `section_member` role, mark event participants |
 | **0.2.1** | patch | Attendance tracking | Attendance list per event |
-| **0.3**   | minor | Archive improvements + activity feed | Search/sort in archive, recent-actions log |
-| **0.3.1** | patch | Role titles enhancement | Custom role display names and badges |
-| **0.4**   | minor | Search & filtering | Global search bar, multi-filter combinations |
-| **0.5**   | minor | Dashboard overview | Stat cards: member count, upcoming events |
-| **0.5.x** | patch | Refactoring & performance | Code cleanup, query optimization, pagination |
+| **0.3**   | minor | Department Manager role + activity feed | Introduce `department_manager` role with scoped permissions, recent-actions log |
+| **0.3.1** | patch | Archive improvements | Search/sort in archive, improved restore UI |
+| **0.4**   | minor | Admin role + Discord-style role foundation | Introduce `admin` role, role management UI, permission assignment per role |
+| **0.4.1** | patch | Role UI polish | Role badges, role assignment screens, custom role display names |
+| **0.5**   | minor | Basic task engine + global search | Task CRUD, task assignment to members, global search bar |
+| **0.5.1** | patch | Dashboard overview + performance | Stat cards (member count, events), query optimization, pagination |
+| **0.6**   | minor | Full task engine + role-event-task linking | Task deadlines, full assignment engine, link roles to events/tasks |
+| **0.7**   | minor | Notifications + event templates | Deadline alerts, assignment notifications, reusable event templates |
+| **0.8**   | minor | Cloud Functions + role automation | Auto-notify on events/deadlines, role change automation |
+| **0.9**   | minor | Advanced analytics + auth improvements | Full analytics dashboard, email/password auth, audit trail exports |
 
 ---
 
