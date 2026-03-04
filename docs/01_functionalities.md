@@ -41,9 +41,9 @@
 
 ### 2. Theme & Branding
 
-- Light and Dark theme (Material 3)
+- Light and Dark theme (Material 3) — **Dark is the default**
 - **Font**: Google Sans exclusively — no other typeface is permitted anywhere in the app
-- Theme toggle in settings
+- Theme toggle in settings (dark theme by default)
 - Consistent typography across all screens
 
 #### Color Palette — Google Brand Colors with Material 3 Tonal Variants
@@ -83,14 +83,14 @@ Department → Section → Members
 - Join Date
 - Department (reference)
 - Section (reference, optional)
-- Role: `member` | `core_team`
+- Role: `member` | `core_team` | `admin`
 - Status: `active` | `archived`
-- Profile Picture URL (Google Drive link, optional)
+- Profile Picture URL (Firebase Storage URL, optional — cached locally while signed in)
 
-#### Member CRUD (Core Team only)
+#### Member CRUD (Admins & Permitted Core Team)
 - **Create**: Add new member with name, email, department, role
 - **Read**: View member list and individual profiles
-- **Update**: Edit member name, department, section, role
+- **Update**: Edit member name, department, section, role (only admins and core team with `canManageMembers` flag)
 - **Archive**: Soft-delete member (set `archived: true`)
 
 #### Member List View
@@ -106,7 +106,7 @@ Department → Section → Members
 
 #### Permissions
 - All users: View member list and profiles
-- Core Team: Create, edit, archive members
+- Admins & Core Team with permissions: Create, edit, archive members
 
 ---
 
@@ -120,19 +120,21 @@ Department → Section → Members
 - ID
 - Name
 - Description (optional)
+- Events (list of events related to this department, shown only to department members)
 - Status: `active` | `archived`
 
 #### Section Fields (v0.1)
 - ID
 - Name
 - Department ID (parent reference)
+- Members (list of members in this section)
 - Status: `active` | `archived`
 
 #### Features
 - View department list
-- View department detail with its sections
+- View department detail with its sections and department events
 - View section detail with its members
-- Core Team: Create / edit departments and sections
+- Admins & Core Team: Create / edit departments and sections
 
 ---
 
@@ -142,44 +144,55 @@ Department → Section → Members
 - ID
 - Title
 - Description
+- Type: `external` | `internal` | `department`
+- Department ID: (Required if type is `department`)
+- Location Type: `online` | `in_person`
+- Location Info: (Link if online, physical address/location if in_person)
 - Start Date
 - End Date
 - Status: `upcoming` | `ongoing` | `completed` | `archived`
 - Created By (member ID)
 - Created At
 
+**Event Types:**
+- **External Event:** Made for all the community and shared on social media.
+- **Internal Event:** Made only for club members and not posted on social media.
+- **Department Event:** Made by a department manager solely for the members of that department. Not shown to members outside that department.
+
 #### Event Features
-- **List View**: Show all upcoming and ongoing events
+- **List View**: Show all upcoming and ongoing events (filtered by visibility: regular members don't see other departments' events)
 - **Detail View**: Show full event info
-- **Create** (Core Team only): Add new event with title, description, dates
-- **Edit** (Core Team only): Update event details
-- **Archive** (Core Team only): Soft-delete event
+- **Create** (Admins & Core Team with perm): Add new event with title, description, type, location, dates
+- **Edit** (Admins & Core Team with perm): Update event details
+- **Archive** (Admins & Core Team with perm): Soft-delete event
 
 #### Archive View
 - Separate archive section for both members and events
-- Restore archived items (Core Team only)
+- Restore archived items (Admins & Core Team with `canArchive` perm)
+- **Note:** Regular members cannot see the archive view. It is strictly limited to Admins and authorized Core Team members.
 
 ---
 
 ### 6. Basic Permission System
 
-Two roles only in v0.1:
+Three roles in v0.1:
 
 | Role | Description |
 |------|-------------|
 | `member` | Regular club member |
-| `core_team` | Can manage members and events |
+| `core_team` | Conditionally granted management permissions via flags |
+| `admin` | Full access. Can manage members, roles, events, and archive |
 
-Three permission flags:
+Three permission flags (applied to `core_team` members):
 
-| Flag | Granted To |
-|------|-----------|
-| `canManageMembers` | Core Team |
-| `canManageEvents` | Core Team |
-| `canArchive` | Core Team |
+| Flag | Description |
+|------|-------------|
+| `canManageMembers` | Can create, edit, and archive members. |
+| `canManageEvents` | Can create, edit, and archive events. |
+| `canArchive` | Can access the archive and restore items. |
 
-No complex RBAC. No Section Member, Department Manager, or Admin role in v0.1.
-Full role hierarchy (`Member → Section Member → Department Manager → Core Team → Admin`) is introduced incrementally from v0.2 onward, using a Discord-style role permission system.
+No complex RBAC. No Section Member or Department Manager role in v0.1.
+Full role hierarchy (`Member → ... → Admin`) is formalized from v0.2 onward via Custom Roles.
 
 ---
 
@@ -195,11 +208,11 @@ Full role hierarchy (`Member → Section Member → Department Manager → Core 
 - Home (simple summary / welcome)
 - Members list
 - Member detail
-- Member create/edit form (Core Team)
+- Member create/edit form (Admins/Core Team with perm)
 - Events list
 - Event detail
-- Event create/edit form (Core Team)
-- Archive (members + events)
+- Event create/edit form (Admins/Core Team with perm)
+- Archive (members + events) — **Button in Bottom Navigation Bar shown ONLY for Admins and Core Team.**
 - Settings (theme toggle, logout)
 
 ---

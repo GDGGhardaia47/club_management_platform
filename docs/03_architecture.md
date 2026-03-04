@@ -26,7 +26,7 @@
 - **Platform**: Firebase
 - **Authentication**: Firebase Authentication (Google Sign-In)
 - **Database**: Cloud Firestore
-- **Storage**: No file storage — Google Drive links only
+- **Storage**: Firebase Storage (for profile pictures) — external files use Google Drive links
 
 ### Development
 - **Version Control**: Git / GitHub

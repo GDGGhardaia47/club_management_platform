@@ -27,11 +27,14 @@ Only models required for v0.1 are defined here. Future models are listed at the 
   "id": "string (Firebase Auth UID)",
   "name": "string",
   "email": "string",
-  "role": "string (enum v0.1: 'member' | 'core_team' — full hierarchy added incrementally from v0.2)",
+  "role": "string (enum: 'member' | 'core_team' | 'admin')",
   "departmentId": "string (reference to departments)",
   "sectionId": "string | null (reference to sections)",
   "joinDate": "timestamp",
   "status": "string (enum: 'active' | 'archived')",
+  "canManageMembers": "boolean",
+  "canManageEvents": "boolean",
+  "canArchive": "boolean",
   "archived": "boolean",
   "archivedAt": "timestamp | null",
   "profilePictureUrl": "string | null",
@@ -42,23 +45,18 @@ Only models required for v0.1 are defined here. Future models are listed at the 
 
 ### Permission Flags (derived, not stored)
 
-Computed from role at runtime in v0.1. From v0.4 onward, permissions are driven by the Discord-style role system (assigned by Admin).
+Unlike previous versions, flags are explicitly stored on the user document (especially for `core_team`):
 
-| Flag | `member` | `core_team` |
-|------|----------|-------------|
-| `canManageMembers` | false | true |
-| `canManageEvents` | false | true |
-| `canArchive` | false | true |
-
-> **Future (v0.4+):** Permission flags will be resolved from a `Role` document rather than hardcoded per role name. Admins will create roles and assign permission sets via the Discord-style role management UI.
+| Flag | `member` | `core_team` | `admin` |
+|------|----------|-------------|---------|
+| `canManageMembers` | false | true/false | true |
+| `canManageEvents` | false | true/false | true |
+| `canArchive` | false | true/false | true |
 
 ### Dart Model
 
 ```dart
-// v0.1 roles only. Full hierarchy: member → sectionMember → departmentManager → coreTeam → admin
-// From v0.2 onward, new roles are introduced incrementally.
-// From v0.4, roles become dynamic (Discord-style) managed by Admin.
-enum MemberRole { member, coreTeam }
+enum MemberRole { member, coreTeam, admin }
 enum MemberStatus { active, archived }
 
 class Member {
@@ -70,6 +68,9 @@ class Member {
   final String? sectionId;
   final DateTime joinDate;
   final MemberStatus status;
+  final bool _canManageMembers;
+  final bool _canManageEvents;
+  final bool _canArchive;
   final bool archived;
   final DateTime? archivedAt;
   final String? profilePictureUrl;
@@ -85,29 +86,41 @@ class Member {
     this.sectionId,
     required this.joinDate,
     required this.status,
+    bool canManageMembers = false,
+    bool canManageEvents = false,
+    bool canArchive = false,
     required this.archived,
     this.archivedAt,
     this.profilePictureUrl,
     required this.createdAt,
     required this.updatedAt,
-  });
+  })  : _canManageMembers = canManageMembers,
+        _canManageEvents = canManageEvents,
+        _canArchive = canArchive;
 
   // Permission helpers
-  bool get canManageMembers => role == MemberRole.coreTeam;
-  bool get canManageEvents => role == MemberRole.coreTeam;
-  bool get canArchive => role == MemberRole.coreTeam;
+  bool get canManageMembers => role == MemberRole.admin || _canManageMembers;
+  bool get canManageEvents => role == MemberRole.admin || _canManageEvents;
+  bool get canArchive => role == MemberRole.admin || _canArchive;
 
   factory Member.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    MemberRole parsedRole = MemberRole.member;
+    if (data['role'] == 'admin') parsedRole = MemberRole.admin;
+    else if (data['role'] == 'core_team') parsedRole = MemberRole.coreTeam;
+
     return Member(
       id: doc.id,
       name: data['name'] ?? '',
       email: data['email'] ?? '',
-      role: data['role'] == 'core_team' ? MemberRole.coreTeam : MemberRole.member,
+      role: parsedRole,
       departmentId: data['departmentId'] ?? '',
       sectionId: data['sectionId'],
       joinDate: (data['joinDate'] as Timestamp).toDate(),
       status: data['status'] == 'archived' ? MemberStatus.archived : MemberStatus.active,
+      canManageMembers: data['canManageMembers'] ?? false,
+      canManageEvents: data['canManageEvents'] ?? false,
+      canArchive: data['canArchive'] ?? false,
       archived: data['archived'] ?? false,
       archivedAt: data['archivedAt'] != null
           ? (data['archivedAt'] as Timestamp).toDate()
@@ -122,11 +135,14 @@ class Member {
     return {
       'name': name,
       'email': email,
-      'role': role == MemberRole.coreTeam ? 'core_team' : 'member',
+      'role': role.name,
       'departmentId': departmentId,
       'sectionId': sectionId,
       'joinDate': Timestamp.fromDate(joinDate),
-      'status': status == MemberStatus.archived ? 'archived' : 'active',
+      'status': status.name,
+      'canManageMembers': _canManageMembers,
+      'canManageEvents': _canManageEvents,
+      'canArchive': _canArchive,
       'archived': archived,
       'archivedAt': archivedAt != null ? Timestamp.fromDate(archivedAt!) : null,
       'profilePictureUrl': profilePictureUrl,
@@ -140,7 +156,7 @@ class Member {
 ### Validation Rules
 - `name`: required, 2–50 characters
 - `email`: required, valid email format
-- `role`: required, must be `'member'` or `'core_team'` in v0.1 — additional roles (`section_member`, `department_manager`, `admin`) added in v0.2–v0.4
+- `role`: required, must be `'member'`, `'core_team'`, or `'admin'` in v0.1 — additional roles (`section_member`, `department_manager`, `admin`) added in v0.2–v0.4
 - `departmentId`: required
 - `joinDate`: auto-set on creation
 
@@ -158,6 +174,7 @@ class Member {
   "id": "string",
   "name": "string",
   "description": "string | null",
+  "eventIds": ["string (reference to events)"],
   "archived": "boolean",
   "archivedAt": "timestamp | null",
   "createdAt": "timestamp",
@@ -172,6 +189,7 @@ class Department {
   final String id;
   final String name;
   final String? description;
+  final List<String> eventIds;
   final bool archived;
   final DateTime? archivedAt;
   final DateTime createdAt;
@@ -181,6 +199,7 @@ class Department {
     required this.id,
     required this.name,
     this.description,
+    this.eventIds = const [],
     required this.archived,
     this.archivedAt,
     required this.createdAt,
@@ -193,6 +212,7 @@ class Department {
       id: doc.id,
       name: data['name'] ?? '',
       description: data['description'],
+      eventIds: List<String>.from(data['eventIds'] ?? []),
       archived: data['archived'] ?? false,
       archivedAt: data['archivedAt'] != null
           ? (data['archivedAt'] as Timestamp).toDate()
@@ -206,6 +226,7 @@ class Department {
     return {
       'name': name,
       'description': description,
+      'eventIds': eventIds,
       'archived': archived,
       'archivedAt': archivedAt != null ? Timestamp.fromDate(archivedAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -232,6 +253,7 @@ class Department {
   "id": "string",
   "name": "string",
   "departmentId": "string (reference to departments)",
+  "memberIds": ["string (reference to members)"],
   "archived": "boolean",
   "archivedAt": "timestamp | null",
   "createdAt": "timestamp",
@@ -246,6 +268,7 @@ class Section {
   final String id;
   final String name;
   final String departmentId;
+  final List<String> memberIds;
   final bool archived;
   final DateTime? archivedAt;
   final DateTime createdAt;
@@ -255,6 +278,7 @@ class Section {
     required this.id,
     required this.name,
     required this.departmentId,
+    this.memberIds = const [],
     required this.archived,
     this.archivedAt,
     required this.createdAt,
@@ -267,6 +291,7 @@ class Section {
       id: doc.id,
       name: data['name'] ?? '',
       departmentId: data['departmentId'] ?? '',
+      memberIds: List<String>.from(data['memberIds'] ?? []),
       archived: data['archived'] ?? false,
       archivedAt: data['archivedAt'] != null
           ? (data['archivedAt'] as Timestamp).toDate()
@@ -280,6 +305,7 @@ class Section {
     return {
       'name': name,
       'departmentId': departmentId,
+      'memberIds': memberIds,
       'archived': archived,
       'archivedAt': archivedAt != null ? Timestamp.fromDate(archivedAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -307,6 +333,10 @@ class Section {
   "id": "string",
   "title": "string",
   "description": "string | null",
+  "type": "string (enum: 'external' | 'internal' | 'department')",
+  "departmentId": "string | null (required if type='department')",
+  "locationType": "string (enum: 'online' | 'in_person')",
+  "location": "string (link or physical address)",
   "startDate": "timestamp",
   "endDate": "timestamp",
   "status": "string (enum: 'upcoming' | 'ongoing' | 'completed' | 'archived')",
@@ -322,11 +352,17 @@ class Section {
 
 ```dart
 enum EventStatus { upcoming, ongoing, completed, archived }
+enum EventType { external, internal, department }
+enum LocationType { online, inPerson }
 
 class Event {
   final String id;
   final String title;
   final String? description;
+  final EventType type;
+  final String? departmentId;
+  final LocationType locationType;
+  final String location;
   final DateTime startDate;
   final DateTime endDate;
   final EventStatus status;
@@ -340,6 +376,10 @@ class Event {
     required this.id,
     required this.title,
     this.description,
+    required this.type,
+    this.departmentId,
+    required this.locationType,
+    required this.location,
     required this.startDate,
     required this.endDate,
     required this.status,
@@ -356,6 +396,10 @@ class Event {
       id: doc.id,
       title: data['title'] ?? '',
       description: data['description'],
+      type: _typeFromString(data['type']),
+      departmentId: data['departmentId'],
+      locationType: data['locationType'] == 'online' ? LocationType.online : LocationType.inPerson,
+      location: data['location'] ?? '',
       startDate: (data['startDate'] as Timestamp).toDate(),
       endDate: (data['endDate'] as Timestamp).toDate(),
       status: _statusFromString(data['status']),
@@ -378,10 +422,22 @@ class Event {
     }
   }
 
+  static EventType _typeFromString(String? value) {
+    switch (value) {
+      case 'internal':   return EventType.internal;
+      case 'department': return EventType.department;
+      default:           return EventType.external;
+    }
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       'title': title,
       'description': description,
+      'type': type.name,
+      'departmentId': departmentId,
+      'locationType': locationType == LocationType.online ? 'online' : 'in_person',
+      'location': location,
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'status': status.name,

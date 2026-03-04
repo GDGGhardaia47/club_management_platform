@@ -33,7 +33,7 @@ class AppViewModel extends ChangeNotifier {
   }
 
   // ── Theme ──
-  bool _isDarkMode = false;
+  bool _isDarkMode = true; // Dark mode is the default
   bool get isDarkMode => _isDarkMode;
 
   void setDarkMode(bool value) {

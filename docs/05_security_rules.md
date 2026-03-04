@@ -18,17 +18,18 @@ Security rules are simplified for v0.1. Two roles, three permission flags. No co
 | Role | Value | Description |
 |------|-------|-------------|
 | Member | `'member'` | Regular club member — read-only access |
-| Core Team | `'core_team'` | Can manage members, events, and archive |
+| Core Team | `'core_team'` | Has configurable permissions |
+| Admin | `'admin'` | Full system access |
 
 ### Permission Flags (v0.1)
 
 | Flag | Granted To | Controls |
 |------|-----------|---------|
-| `canManageMembers` | `core_team` | Create, edit, archive members |
-| `canManageEvents` | `core_team` | Create, edit, archive events |
-| `canArchive` | `core_team` | Archive and restore members/events |
+| `canManageMembers` | `core_team` (optional), `admin` | Create, edit, archive members |
+| `canManageEvents` | `core_team` (optional), `admin` | Create, edit, archive events |
+| `canArchive` | `core_team` (optional), `admin` | Archive and restore members/events |
 
-No department-level permissions. No Section Member role. No Department Manager role. No Admin role. These come in future versions.
+No department-level permissions. No Section Member role. No Department Manager role. These come in future versions.
 
 > From v0.4 onward, Firestore rules will validate against a `roles` collection rather than a hardcoded role string.
 
@@ -36,22 +37,22 @@ No department-level permissions. No Section Member role. No Department Manager r
 
 ## Access Control Summary
 
-| Action | Member | Core Team |
-|--------|--------|-----------|
-| View member list | ✅ | ✅ |
-| View member detail | ✅ | ✅ |
-| Create member | ❌ | ✅ |
-| Edit member | ❌ | ✅ |
-| Archive member | ❌ | ✅ |
-| View event list | ✅ | ✅ |
-| View event detail | ✅ | ✅ |
-| Create event | ❌ | ✅ |
-| Edit event | ❌ | ✅ |
-| Archive event | ❌ | ✅ |
-| View departments | ✅ | ✅ |
-| Manage departments | ❌ | ✅ |
-| View archive | ✅ (read-only) | ✅ |
-| Restore from archive | ❌ | ✅ |
+| Action | Member | Core Team | Admin |
+|--------|--------|-----------|-------|
+| View member list | ✅ | ✅ | ✅ |
+| View member detail | ✅ | ✅ | ✅ |
+| Create member | ❌ | ✅ (if `canManageMembers`) | ✅ |
+| Edit member | ❌ | ✅ (if `canManageMembers`) | ✅ |
+| Archive member | ❌ | ✅ (if `canManageMembers`) | ✅ |
+| View event list | ✅ | ✅ | ✅ |
+| View event detail | ✅ | ✅ | ✅ |
+| Create event | ❌ | ✅ (if `canManageEvents`) | ✅ |
+| Edit event | ❌ | ✅ (if `canManageEvents`) | ✅ |
+| Archive event | ❌ | ✅ (if `canManageEvents`) | ✅ |
+| View departments | ✅ | ✅ | ✅ |
+| Manage departments | ❌ | ✅ | ✅ |
+| View archive | ❌ | ✅ (if `canArchive`) | ✅ |
+| Restore from archive | ❌ | ✅ (if `canArchive`) | ✅ |
 
 ---
 
@@ -74,8 +75,20 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/members/$(request.auth.uid)).data;
     }
 
-    function isCoreTeam() {
-      return isAuthenticated() && currentUser().role == 'core_team';
+    function isAdmin() {
+      return isAuthenticated() && currentUser().role == 'admin';
+    }
+
+    function canManageMembers() {
+      return isAdmin() || (isAuthenticated() && currentUser().role == 'core_team' && currentUser().canManageMembers == true);
+    }
+    
+    function canManageEvents() {
+      return isAdmin() || (isAuthenticated() && currentUser().role == 'core_team' && currentUser().canManageEvents == true);
+    }
+
+    function canArchive() {
+      return isAdmin() || (isAuthenticated() && currentUser().role == 'core_team' && currentUser().canArchive == true);
     }
 
     function isActiveMember() {
@@ -90,14 +103,14 @@ service cloud.firestore {
       // Any authenticated active user can read member profiles
       allow read: if isActiveMember();
 
-      // Only Core Team can create members — no self-registration, ever
-      allow create: if isCoreTeam()
+      // Only Admin or Core Team with access can create members
+      allow create: if canManageMembers()
         && request.resource.data.keys().hasAll(['name', 'email', 'role', 'departmentId'])
-        && request.resource.data.role in ['member', 'core_team'];
+        && request.resource.data.role in ['member', 'core_team', 'admin'];
 
-      // Only Core Team can update members
-      allow update: if isCoreTeam()
-        && request.resource.data.role in ['member', 'core_team'];
+      // Only Admin or Core Team with access can update members
+      allow update: if canManageMembers()
+        && request.resource.data.role in ['member', 'core_team', 'admin'];
 
       // Deletes are never allowed — use archive (soft delete) instead
       allow delete: if false;
@@ -111,8 +124,8 @@ service cloud.firestore {
       // Any authenticated active user can read departments
       allow read: if isActiveMember();
 
-      // Only Core Team can create/update departments
-      allow create, update: if isCoreTeam()
+      // Only Admin/CoreTeam can create/update departments
+      allow create, update: if isAdmin() || (isAuthenticated() && currentUser().role == 'core_team')
         && request.resource.data.keys().hasAny(['name'])
         && request.resource.data.name is string;
 
@@ -126,7 +139,7 @@ service cloud.firestore {
     match /sections/{sectionId} {
       allow read: if isActiveMember();
 
-      allow create, update: if isCoreTeam()
+      allow create, update: if isAdmin() || (isAuthenticated() && currentUser().role == 'core_team')
         && request.resource.data.keys().hasAll(['name', 'departmentId']);
 
       allow delete: if false;
@@ -140,13 +153,13 @@ service cloud.firestore {
       // Any authenticated active user can read events
       allow read: if isActiveMember();
 
-      // Only Core Team can create events
-      allow create: if isCoreTeam()
+      // Only Admin or Core Team with access can create events
+      allow create: if canManageEvents()
         && request.resource.data.keys().hasAll(['title', 'startDate', 'endDate'])
         && request.resource.data.title is string;
 
-      // Only Core Team can update events (including archiving)
-      allow update: if isCoreTeam();
+      // Only Admin or Core Team with access can update events
+      allow update: if canManageEvents();
 
       allow delete: if false;
     }
